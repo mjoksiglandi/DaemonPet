@@ -80,7 +80,7 @@ Necesitas:
 
 ### 2. Configure WiFi and Endpoint
 
-Edita [src/config.h](C:/Users/juan.cornejo/Desktop/DaemonPet/src/config.h):
+Edita `src/config.h`:
 
 ```cpp
 static constexpr char WIFI_SSID[] = "TU_WIFI";
@@ -100,19 +100,25 @@ Tambien puedes ajustar:
 ### 3. Build
 
 ```powershell
-C:\Users\juan.cornejo\.platformio\penv\Scripts\platformio.exe run
+pio run
+```
+
+Si `pio` no esta en tu `PATH`, puedes usar:
+
+```powershell
+$env:USERPROFILE\.platformio\penv\Scripts\platformio.exe run
 ```
 
 ### 4. Upload
 
 ```powershell
-C:\Users\juan.cornejo\.platformio\penv\Scripts\platformio.exe run --target upload
+pio run --target upload
 ```
 
 ### 5. Serial Monitor
 
 ```powershell
-C:\Users\juan.cornejo\.platformio\penv\Scripts\platformio.exe device monitor
+pio device monitor
 ```
 
 ## Expected JSON
@@ -192,14 +198,14 @@ Esto permite iterar despues sobre calibracion, gestos o navegacion mas compleja 
 
 ## Roadmap
 
-El plan de evolucion vive en [ROADMAP.md](C:/Users/juan.cornejo/Desktop/DaemonPet/ROADMAP.md).
+El plan de evolucion vive en `ROADMAP.md`.
 
 ## Validation
 
 La base actual fue compilada con exito en este entorno con:
 
 ```powershell
-C:\Users\juan.cornejo\.platformio\penv\Scripts\platformio.exe run
+pio run
 ```
 
 Resultado de referencia de la build:
