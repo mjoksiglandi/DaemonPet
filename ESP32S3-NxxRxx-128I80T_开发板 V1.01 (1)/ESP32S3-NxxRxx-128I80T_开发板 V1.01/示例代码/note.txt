@@ -1,0 +1,2 @@
+xiaozhi-IDF工程注意在英文路径下编译
+xiaozhi-IDF projects should be compiled in English
