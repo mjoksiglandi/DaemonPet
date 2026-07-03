@@ -1,0 +1,7 @@
+{
+  "name": "daemonpet",
+  "version": "0.1.0",
+  "build": {
+    "srcDir": "src"
+  }
+}

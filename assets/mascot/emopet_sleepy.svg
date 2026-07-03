@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480">
+  <defs>
+    <linearGradient id="ringSleepy" x1="0" x2="1">
+      <stop offset="0%" stop-color="#5E4B8B"/>
+      <stop offset="100%" stop-color="#73808C"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="480" fill="#0B0D10"/>
+  <circle cx="240" cy="240" r="196" fill="#10151E"/>
+  <circle cx="240" cy="240" r="188" fill="none" stroke="#29313C" stroke-width="12"/>
+  <path d="M110 250a130 130 0 1 1 260 0" fill="none" stroke="url(#ringSleepy)" stroke-width="12" stroke-linecap="round" opacity=".85"/>
+  <rect x="118" y="108" width="244" height="212" rx="88" fill="#1C232B"/>
+  <rect x="140" y="128" width="200" height="172" rx="70" fill="#10161C"/>
+  <path d="M176 205h42" stroke="#7FD2D6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M262 205h42" stroke="#7FD2D6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M215 248c10 8 40 8 50 0" fill="none" stroke="#7E8B97" stroke-width="7" stroke-linecap="round"/>
+  <rect x="180" y="312" width="120" height="72" rx="28" fill="#242D37"/>
+  <rect x="202" y="334" width="76" height="28" rx="14" fill="#73808C"/>
+  <text x="312" y="126" fill="#9AA6B2" font-size="26" font-family="Arial">Z</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480">
+  <defs>
+    <linearGradient id="ringHot" x1="0" x2="1">
+      <stop offset="0%" stop-color="#FF8A3D"/>
+      <stop offset="100%" stop-color="#F5B942"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="480" fill="#0B0D10"/>
+  <circle cx="240" cy="240" r="196" fill="#121722"/>
+  <circle cx="240" cy="240" r="188" fill="none" stroke="#40352A" stroke-width="12"/>
+  <path d="M100 240a140 140 0 1 1 280 0" fill="none" stroke="url(#ringHot)" stroke-width="14" stroke-linecap="round"/>
+  <rect x="118" y="98" width="244" height="212" rx="88" fill="#1E242B"/>
+  <rect x="140" y="118" width="200" height="172" rx="70" fill="#101319"/>
+  <ellipse cx="196" cy="198" rx="18" ry="22" fill="#5FE1E6"/>
+  <ellipse cx="284" cy="198" rx="18" ry="22" fill="#5FE1E6"/>
+  <path d="M206 242c10-10 58-10 68 0" fill="none" stroke="#C8D0D7" stroke-width="8" stroke-linecap="round"/>
+  <rect x="178" y="300" width="124" height="78" rx="30" fill="#29323A"/>
+  <rect x="196" y="324" width="88" height="34" rx="17" fill="#FF8A3D"/>
+  <path d="M336 142c-10 10-12 22-6 34 4 8 4 16-2 24" fill="none" stroke="#FF8A3D" stroke-width="8" stroke-linecap="round"/>
+</svg>

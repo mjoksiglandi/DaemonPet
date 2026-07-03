@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480">
+  <defs>
+    <linearGradient id="statusRing" x1="0" x2="1">
+      <stop offset="0%" stop-color="#5E4B8B"/>
+      <stop offset="100%" stop-color="#5FE1E6"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="480" fill="#0B0D10"/>
+  <circle cx="240" cy="240" r="188" fill="none" stroke="#2C3641" stroke-width="14"/>
+  <path d="M94 222a150 150 0 1 1 292 0" fill="none" stroke="url(#statusRing)" stroke-width="14" stroke-linecap="round"/>
+</svg>
