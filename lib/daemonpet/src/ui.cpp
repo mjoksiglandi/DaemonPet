@@ -1,6 +1,7 @@
 #include "ui.h"
 
 #include <math.h>
+#include <time.h>
 #include <Arduino_GFX_Library.h>
 #include <Wire.h>
 #include "config.h"
@@ -49,6 +50,32 @@ constexpr uint16_t COLOR_VIOLET_GLOW = 0x7B92;
 
 uint16_t rgb(uint8_t r, uint8_t g, uint8_t b) {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
+void drawArc(int16_t cx,
+             int16_t cy,
+             int16_t radius,
+             float startDeg,
+             float endDeg,
+             uint16_t color,
+             uint8_t thickness = 1,
+             float stepDeg = 2.0f) {
+  for (uint8_t band = 0; band < thickness; ++band) {
+    for (float angle = startDeg; angle <= endDeg; angle += stepDeg) {
+      const float rad = angle * 0.0174532925f;
+      const int16_t x = cx + static_cast<int16_t>(cos(rad) * (radius - band));
+      const int16_t y = cy + static_cast<int16_t>(sin(rad) * (radius - band));
+      g_gfx->drawPixel(x, y, color);
+    }
+  }
+}
+
+void drawDotGrid(int16_t originX, int16_t originY, uint8_t rows, uint8_t cols, uint16_t color) {
+  for (uint8_t row = 0; row < rows; ++row) {
+    for (uint8_t col = 0; col < cols; ++col) {
+      g_gfx->fillCircle(originX + col * 6, originY + row * 6, 1, color);
+    }
+  }
 }
 
 }  // namespace
@@ -100,6 +127,9 @@ void UI::render(const SystemStatus& status,
   switch (currentView_) {
     case ScreenView::Pet:
       drawPetView(status, petState, wifiConnected);
+      break;
+    case ScreenView::Clock:
+      drawClockView();
       break;
     case ScreenView::System:
       drawSystemView(status, petState);
@@ -183,6 +213,9 @@ bool UI::readTouch(int16_t& x, int16_t& y) {
 void UI::nextView() {
   switch (currentView_) {
     case ScreenView::Pet:
+      currentView_ = ScreenView::Clock;
+      break;
+    case ScreenView::Clock:
       currentView_ = ScreenView::System;
       break;
     case ScreenView::System:
@@ -304,11 +337,13 @@ void UI::drawDockerMockBackground(uint16_t accentColor) {
 }
 
 void UI::drawViewDots(ScreenView activeView, uint16_t activeColor) {
-  const int totalViews = 5;
-  const int startX = 94;
+  const int totalViews = 6;
+  const int spacing = 13;
+  const int totalWidth = (totalViews - 1) * spacing;
+  const int startX = (DisplayConfig::SCREEN_WIDTH / 2) - (totalWidth / 2);
   const int y = 224;
   for (int i = 0; i < totalViews; ++i) {
-    const int x = startX + (i * 13);
+    const int x = startX + (i * spacing);
     const bool active = i == static_cast<int>(activeView);
     g_gfx->fillCircle(x, y, active ? 4 : 2, active ? activeColor : COLOR_DARKGREY);
   }
@@ -637,6 +672,101 @@ void UI::drawPetView(const SystemStatus& status, const PetState& petState, bool 
   drawViewDots(ScreenView::Pet, petState.primaryColor);
 }
 
+void UI::drawClockView() {
+  const uint16_t cyan = COLOR_CYAN;
+  const uint16_t violet = COLOR_LAVENDER;
+  const uint16_t shell = rgb(10, 14, 28);
+  const uint16_t core = rgb(6, 10, 24);
+  tm timeinfo = {};
+  const bool rtcValid = getLocalTime(&timeinfo, 5) && timeinfo.tm_year >= (2024 - 1900);
+
+  g_gfx->fillScreen(COLOR_BLACK);
+  g_gfx->fillCircle(120, 120, 118, shell);
+  g_gfx->fillCircle(120, 120, 108, rgb(12, 17, 34));
+  g_gfx->fillCircle(120, 120, 92, core);
+  g_gfx->drawCircle(120, 120, 116, rgb(26, 38, 62));
+  g_gfx->drawCircle(120, 120, 104, COLOR_STROKE);
+  g_gfx->drawCircle(120, 120, 92, rgb(20, 28, 56));
+
+  drawArc(120, 120, 116, 188.0f, 320.0f, cyan, 2);
+  drawArc(120, 120, 116, 336.0f, 356.0f, violet, 2);
+  drawArc(120, 120, 98, 208.0f, 264.0f, cyan, 2);
+  drawArc(120, 120, 98, 274.0f, 396.0f, violet, 2);
+  drawArc(120, 120, 100, 188.0f, 352.0f, rgb(40, 50, 88));
+  drawArc(120, 120, 100, 8.0f, 172.0f, rgb(40, 50, 88));
+
+  g_gfx->fillCircle(120, 16, 5, cyan);
+  g_gfx->fillCircle(120, 224, 5, cyan);
+  g_gfx->fillCircle(16, 120, 4, violet);
+  g_gfx->fillCircle(224, 120, 4, violet);
+  g_gfx->drawCircle(120, 48, 7, cyan);
+  g_gfx->drawCircle(120, 192, 7, cyan);
+  drawDotGrid(98, 58, 4, 5, rgb(64, 54, 128));
+  drawDotGrid(98, 176, 4, 5, rgb(38, 42, 96));
+  drawDotGrid(40, 84, 7, 2, rgb(58, 52, 120));
+  drawDotGrid(194, 84, 7, 2, rgb(58, 52, 120));
+
+  if (!rtcValid) {
+    centerText("RTC", 86, 3, cyan);
+    centerText("sin hora", 122, 2, COLOR_WHITE);
+    centerText("esperando sync", 156, 1, COLOR_LIGHTGREY);
+    drawViewDots(ScreenView::Clock, violet);
+    return;
+  }
+
+  const String hourText = (timeinfo.tm_hour < 10 ? "0" : "") + String(timeinfo.tm_hour);
+  const String minuteText = (timeinfo.tm_min < 10 ? "0" : "") + String(timeinfo.tm_min);
+  const String colonText = timeinfo.tm_sec % 2 == 0 ? ":" : ".";
+
+  g_gfx->setTextSize(4);
+  int16_t x1 = 0;
+  int16_t y1 = 0;
+  uint16_t hourWidth = 0;
+  uint16_t hourHeight = 0;
+  uint16_t colonWidth = 0;
+  uint16_t colonHeight = 0;
+  uint16_t minuteWidth = 0;
+  uint16_t minuteHeight = 0;
+  g_gfx->getTextBounds(hourText, 0, 0, &x1, &y1, &hourWidth, &hourHeight);
+  g_gfx->getTextBounds(colonText, 0, 0, &x1, &y1, &colonWidth, &colonHeight);
+  g_gfx->getTextBounds(minuteText, 0, 0, &x1, &y1, &minuteWidth, &minuteHeight);
+
+  const int16_t gap = 6;
+  const int16_t totalWidth = static_cast<int16_t>(hourWidth + colonWidth + minuteWidth + gap * 2);
+  const int16_t startX = (DisplayConfig::SCREEN_WIDTH - totalWidth) / 2;
+  const int16_t timeY = 128;
+
+  g_gfx->setTextColor(cyan);
+  g_gfx->setCursor(startX, timeY);
+  g_gfx->print(hourText);
+
+  g_gfx->setTextColor(COLOR_WHITE);
+  g_gfx->setCursor(startX + hourWidth + gap, timeY);
+  g_gfx->print(colonText);
+
+  g_gfx->setTextColor(violet);
+  g_gfx->setCursor(startX + hourWidth + colonWidth + gap * 2, timeY);
+  g_gfx->print(minuteText);
+
+  g_gfx->drawFastHLine(52, 148, 136, rgb(76, 88, 120));
+  g_gfx->fillCircle(52, 148, 2, cyan);
+  g_gfx->fillCircle(120, 148, 2, COLOR_WHITE);
+  g_gfx->fillCircle(188, 148, 2, cyan);
+
+  const String dateText =
+      rtcWeekdayLabel(timeinfo.tm_wday) + ", " + (timeinfo.tm_mday < 10 ? "0" : "") + String(timeinfo.tm_mday) +
+      " " + rtcMonthLabel(timeinfo.tm_mon + 1) + " " + String(timeinfo.tm_year + 1900);
+  centerText(dateText, 182, 1, COLOR_SOFT_WHITE);
+
+  g_gfx->drawFastHLine(82, 196, 22, cyan);
+  g_gfx->drawFastHLine(138, 196, 22, cyan);
+  g_gfx->fillCircle(112, 196, 3, cyan);
+  g_gfx->fillCircle(120, 196, 4, violet);
+  g_gfx->fillCircle(128, 196, 3, cyan);
+
+  drawViewDots(ScreenView::Clock, violet);
+}
+
 void UI::drawSystemView(const SystemStatus& status, const PetState& petState) {
   drawListMockBackground(petState.primaryColor, 4);
 
@@ -865,6 +995,58 @@ String UI::shortDayLabel(const String& isoDate) {
     case 6:
     default:
       return "Vie";
+  }
+}
+
+String UI::rtcWeekdayLabel(uint8_t weekday) {
+  switch (weekday) {
+    case 0:
+      return "Dom";
+    case 1:
+      return "Lun";
+    case 2:
+      return "Mar";
+    case 3:
+      return "Mie";
+    case 4:
+      return "Jue";
+    case 5:
+      return "Vie";
+    case 6:
+      return "Sab";
+    default:
+      return "--";
+  }
+}
+
+String UI::rtcMonthLabel(uint8_t month) {
+  switch (month) {
+    case 1:
+      return "Ene";
+    case 2:
+      return "Feb";
+    case 3:
+      return "Mar";
+    case 4:
+      return "Abr";
+    case 5:
+      return "May";
+    case 6:
+      return "Jun";
+    case 7:
+      return "Jul";
+    case 8:
+      return "Ago";
+    case 9:
+      return "Sep";
+    case 10:
+      return "Oct";
+    case 11:
+      return "Nov";
+    case 12:
+      return "Dic";
+    default:
+      return "--";
   }
 }
 

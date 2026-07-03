@@ -7,6 +7,7 @@
 
 enum class ScreenView {
   Pet,
+  Clock,
   System,
   Network,
   Docker,
@@ -86,6 +87,7 @@ class UI {
   void drawStormIcon(int16_t cx, int16_t cy);
   void drawPetFace(const PetState& petState);
   void drawPetView(const SystemStatus& status, const PetState& petState, bool wifiConnected);
+  void drawClockView();
   void drawSystemView(const SystemStatus& status, const PetState& petState);
   void drawNetworkView(const SystemStatus& status, const PetState& petState, bool wifiConnected);
   void drawDockerView(const SystemStatus& status, const PetState& petState);
@@ -98,6 +100,8 @@ class UI {
                        uint8_t scale,
                        uint16_t color);
   String shortDayLabel(const String& isoDate);
+  String rtcWeekdayLabel(uint8_t weekday);
+  String rtcMonthLabel(uint8_t month);
   String weatherLabel(int weatherCode);
   void centerText(const String& text, int16_t y, uint8_t scale, uint16_t color);
   bool readRegister8(uint8_t address, uint8_t reg, uint8_t& value);

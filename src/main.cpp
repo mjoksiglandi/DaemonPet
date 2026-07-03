@@ -1,7 +1,10 @@
 #include <Arduino.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "config.h"
 #include "pet_state.h"
+#include "rtc_clock.h"
 #include "status_client.h"
 #include "ui.h"
 #include "weather_client.h"
@@ -10,6 +13,7 @@
 namespace {
 
 WiFiManager wifiManager;
+RTCClock rtcClock;
 StatusClient statusClient;
 WeatherClient weatherClient;
 UI ui;
@@ -18,8 +22,39 @@ WeatherStatus weatherStatus;
 
 uint32_t lastFetchMs = 0;
 uint32_t lastWeatherFetchMs = 0;
+uint32_t lastRtcSyncMs = 0;
+uint32_t lastRtcAttemptMs = 0;
 bool endpointHealthy = false;
 bool weatherHealthy = false;
+bool lastWifiConnected = false;
+
+void syncRtcFromNtpIfNeeded(bool wifiConnected) {
+  if (!wifiConnected) {
+    return;
+  }
+
+  const uint32_t now = millis();
+  const bool firstSync = lastRtcSyncMs == 0;
+  const bool intervalElapsed = !firstSync && now - lastRtcSyncMs >= AppConfig::RTC_NTP_RESYNC_MS;
+  const bool wifiJustConnected = wifiConnected && !lastWifiConnected;
+  const bool retryWindowElapsed = lastRtcAttemptMs == 0 || now - lastRtcAttemptMs >= AppConfig::WIFI_RETRY_MS;
+
+  if ((!firstSync && !intervalElapsed && !wifiJustConnected) || !retryWindowElapsed) {
+    return;
+  }
+
+  lastRtcAttemptMs = now;
+  if (!rtcClock.syncFromNtp(AppConfig::DEVICE_TIMEZONE,
+                            AppConfig::NTP_SERVER_1,
+                            AppConfig::NTP_SERVER_2,
+                            AppConfig::NTP_SYNC_TIMEOUT_MS)) {
+    Serial.println("RTC sync failed");
+    return;
+  }
+
+  lastRtcSyncMs = now;
+  Serial.println("RTC synced from NTP");
+}
 
 void printMemoryInfo() {
   Serial.printf("Flash: %u MB\n", ESP.getFlashChipSize() / (1024 * 1024));
@@ -69,6 +104,18 @@ void setup() {
   Serial.begin(115200);
   delay(300);
   printMemoryInfo();
+  setenv("TZ", AppConfig::DEVICE_TIMEZONE, 1);
+  tzset();
+
+  if (rtcClock.begin()) {
+    if (rtcClock.syncSystemTime()) {
+      Serial.println("System time restored from RTC");
+    } else {
+      Serial.println("RTC available but time invalid");
+    }
+  } else {
+    Serial.println("RTC init failed");
+  }
 
   wifiManager.begin();
 
@@ -84,6 +131,9 @@ void setup() {
 void loop() {
   wifiManager.update();
   ui.updateInteraction();
+  const bool wifiConnected = wifiManager.isConnected();
+
+  syncRtcFromNtpIfNeeded(wifiConnected);
 
   const uint32_t now = millis();
   if (lastFetchMs == 0 || now - lastFetchMs >= AppConfig::HTTP_REFRESH_MS) {
@@ -96,13 +146,9 @@ void loop() {
     refreshWeather();
   }
 
-  PetState petState = evaluatePetState(systemStatus, wifiManager.isConnected(), endpointHealthy);
-
-  if (!wifiManager.isConnected()) {
-    ui.showMessage("DaemonPet", "Conectando WiFi", wifiManager.localIP());
-  } else {
-    ui.render(systemStatus, weatherStatus, petState, wifiManager.isConnected());
-  }
+  PetState petState = evaluatePetState(systemStatus, wifiConnected, endpointHealthy);
+  ui.render(systemStatus, weatherStatus, petState, wifiConnected);
+  lastWifiConnected = wifiConnected;
 
   delay(50);
 }
